@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>notariat — prototype v7</title>
+<title>notariat — prototype v8</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -155,8 +155,21 @@ body {
   height: var(--t-body);
   padding-bottom: 2px;
 }
-.step-line { flex: 1; height: 1px; background: var(--rule); transition: background 0.3s; }
-.step-line.done { background: var(--black); }
+.step-line {
+  flex: 1; height: 1px; background: var(--rule);
+  transition: background 0.3s;
+  position: relative;
+}
+.step-line.done   { background: var(--black); }
+/* active = current step in progress: half-filled */
+.step-line.active { background: var(--rule); }
+.step-line.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%; height: 100%;
+  background: var(--black);
+}
 
 /* Mid zone */
 .mid {
@@ -236,12 +249,13 @@ body {
   padding-top: var(--s4);
   margin-bottom: var(--s1);
   border-top: 1px solid var(--rule);
-  margin-top: var(--s1);
+  margin-top: 0;
 }
-/* First section label needs no top rule — it follows Tipul procurii */
-.field-section:first-of-type {
+/* First section in a form has no rule above it */
+.field-section--first {
   border-top: none;
   padding-top: var(--s3);
+  margin-top: 0;
 }
 
 .fine {
@@ -253,7 +267,7 @@ body {
 .mid-sub {
   font-size: var(--t-body); font-weight: 400;
   color: var(--grey); line-height: 1.25;
-  margin-top: 16px;
+  margin-top: var(--s2);
   padding-bottom: 8px;
 }
 
@@ -322,6 +336,12 @@ body {
 }
 .ov-mid::-webkit-scrollbar { display: none; }
 
+.hl-overlay {
+  font-size: var(--t-body); font-weight: 400;
+  line-height: 1.25; letter-spacing: 0;
+  color: var(--black); display: block;
+}
+
 .step-block { padding: 0 0 var(--s2) 0; border-top: 1px solid var(--rule); }
 .step-block:last-child { padding-bottom: 0; }
 .step-n { font-size: var(--t-body); font-weight: 400; color: var(--grey); padding-top: var(--s2); margin-bottom: var(--s2); }
@@ -337,6 +357,107 @@ body {
 }
 .step-body { font-size: var(--t-body); font-weight: 400; color: var(--grey); line-height: 1.25; }
 
+/* ── INTERACTIVE FIELD SYSTEM ── */
+
+/* Dropdown field — label + value row + chevron */
+.f-drop {
+  display: flex; flex-direction: column;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.f-drop-lbl {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); margin-bottom: 3px;
+}
+/* Select IS the value — styled to match our field exactly */
+.f-drop select {
+  font-family: var(--f); font-size: var(--t-body);
+  font-weight: 400; color: var(--black);
+  background: none; border: none; outline: none;
+  padding: 0; margin: 0; cursor: pointer;
+  width: 100%; line-height: 1.25;
+  /* Remove native arrow — we add our own SVG via background */
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23717171' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  padding-right: 16px;
+}
+.f-drop select:invalid,
+.f-drop select option[value=""] { color: var(--grey); opacity: 0.4; }
+.f-drop select option { color: var(--black); opacity: 1; }
+
+/* Chevron SVG — kept for other uses */
+.chev-down {
+  flex-shrink: 0; margin-left: 6px;
+  color: var(--grey); opacity: 0.4;
+}
+
+/* Text input field — label above, input below */
+.f-text {
+  display: flex; flex-direction: column;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.f-text-lbl {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); margin-bottom: 3px;
+}
+.f-text input, .f-text textarea {
+  font-family: var(--f); font-size: var(--t-body);
+  font-weight: 400; color: var(--black);
+  background: none; border: none; outline: none;
+  padding: 0; margin: 0; width: 100%;
+  line-height: 1.25;
+  caret-color: var(--red);
+}
+.f-text input::placeholder,
+.f-text textarea::placeholder {
+  color: var(--grey); opacity: 0.4;
+}
+.f-text textarea {
+  resize: none; min-height: 40px;
+}
+
+/* Upload row */
+.f-upload {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+}
+.f-upload-lbl { font-size: var(--t-body); font-weight: 400; color: var(--grey); }
+.f-upload input[type=file] { display: none; }
+.f-upload-status {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); opacity: 0.4;
+}
+
+/* Conditional section — hidden by default */
+.cond { display: none; }
+.cond.show { display: block; }
+
+/* field-select kept for S5 compatibility */
+.field-select {
+  display: flex; flex-direction: column;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.field-select-lbl {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); margin-bottom: 3px;
+}
+.field-select select {
+  font-family: var(--f); font-size: var(--t-body);
+  font-weight: 400; color: var(--black);
+  background: none; border: none; outline: none;
+  padding: 0; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  width: 100%;
+}
+.field-select select option { color: var(--black); }
+
 /* S5 field reveal animation */
 .field-reveal {
   animation: reveal 0.3s ease forwards;
@@ -350,7 +471,7 @@ body {
 </head>
 <body>
 
-<div class="scene-label">notariat · prototype v8.10</div>
+<div class="scene-label">notariat · prototype v9.3</div>
 
 <div class="phone">
   <div class="di"></div>
@@ -431,7 +552,7 @@ body {
       </div>
       <button class="back" onclick="go(1)">
         <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="btn" onclick="go(3)">
@@ -439,11 +560,11 @@ body {
       </button>
     </div>
 
-    <!-- ══ 3: FORM — Procura Vanzare Imobil ══ -->
+    <!-- ══ 3: FORM ══ -->
     <div class="card" data-i="3">
       <button class="logo" onclick="go(0)">notariat</button>
       <div class="steps">
-        <div class="step-line done"></div>
+        <div class="step-line active"></div>
         <div class="step-line"></div>
         <div class="step-line"></div>
       </div>
@@ -452,78 +573,13 @@ body {
       </div>
       <div class="mid-cover"></div>
       <div class="mid">
-        <div class="mid-pad">
-          <div class="field-filled">
-            <span class="field-filled-lbl">Tipul procurii</span>
-            <span class="field-filled-val">Vanzare imobil</span>
-          </div>
-          <!-- Point 4: section labels at full grey, thin rule, air above -->
-          <span class="field-section">Mandant — datele tale</span>
-          <div class="upload">
-            <span class="upload-lbl">Copie C.I. — incarcat</span>
-            <span class="upload-done">✓</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Nume complet</span>
-            <span class="field-filled-val">Alexandru Munteanu</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Data nasterii</span>
-            <span class="field-filled-val">12.03.1985</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">CNP</span>
-            <span class="field-filled-val">1850312123456</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Adresa domiciliu</span>
-            <span class="field-filled-val">Str. Florilor 14, ap. 3, Cluj-Napoca</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Cetatenie</span>
-            <span class="field-filled-val">Romana</span>
-          </div>
-          <!-- Point 4: Mandatar section — same treatment -->
-          <span class="field-section">Mandatar — datele imputernicitului</span>
-          <div class="upload">
-            <span class="upload-lbl">Copie C.I. — incarcat</span>
-            <span class="upload-done">✓</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Nume complet</span>
-            <span class="field-filled-val">Maria Munteanu</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Data nasterii</span>
-            <span class="field-filled-val">04.07.1988</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">CNP</span>
-            <span class="field-filled-val">2880704123456</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Adresa domiciliu</span>
-            <span class="field-filled-val">Str. Florilor 14, ap. 3, Cluj-Napoca</span>
-          </div>
-          <span class="field-section">Scopul procurii</span>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Imobil de vandut</span>
-            <span class="field-filled-val">Ap. 5, Str. Mihai Viteazu 22, Timisoara, CF nr. 123456</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Pret de vanzare</span>
-            <span class="field-filled-val">85.000 EUR</span>
-          </div>
-          <div class="field-filled">
-            <span class="field-filled-lbl">Valabilitate procura</span>
-            <span class="field-filled-val">6 luni de la data autentificarii</span>
-          </div>
-          <div class="fine">Trebuie sa te prezinti personal la notar — fara exceptie. Actul original ramane in arhiva notarului; tu primesti un duplicat. Procura se inregistreaza in RNNEPR.</div>
+        <div class="mid-pad" id="form-body">
+          <!-- Rendered by JS based on act type -->
         </div>
       </div>
       <button class="back" onclick="go(2)">
         <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="btn" onclick="go(4)">
@@ -532,12 +588,11 @@ body {
     </div>
 
     <!-- ══ 4: PAYMENT ══ -->
-    <!-- Point 5: enriched with ref copy — Plata avans intro + Zero. kicker -->
     <div class="card" data-i="4">
       <button class="logo" onclick="go(0)">notariat</button>
       <div class="steps">
         <div class="step-line done"></div>
-        <div class="step-line done"></div>
+        <div class="step-line active"></div>
         <div class="step-line"></div>
       </div>
       <div class="head">
@@ -550,7 +605,7 @@ body {
       </div>
       <button class="back" onclick="go(3)">
         <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="btn" onclick="go(5)">
@@ -558,14 +613,13 @@ body {
       </button>
     </div>
 
-    <!-- ══ 5: BOOKING — fields reveal gradually ══ -->
-    <!-- Point 8: fields appear one by one as previous is filled -->
+    <!-- ══ 5: BOOKING ══ -->
     <div class="card" data-i="5">
       <button class="logo" onclick="go(0)">notariat</button>
       <div class="steps">
         <div class="step-line done"></div>
         <div class="step-line done"></div>
-        <div class="step-line done"></div>
+        <div class="step-line active"></div>
       </div>
       <div class="head">
         <span class="hl">Locul tau.</span>
@@ -590,7 +644,7 @@ body {
             <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
           </div>
           <!-- Ora: hidden until date chosen -->
-          <div class="field" id="f-ora" style="display:none">
+          <div class="field" id="f-ora" style="display:none" onclick="revealNext('f-fine')">
             <span class="field-lbl">Ora preferata</span>
             <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
           </div>
@@ -599,7 +653,7 @@ body {
       </div>
       <button class="back" onclick="go(4)">
         <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="btn" onclick="go(6)">
@@ -623,7 +677,7 @@ body {
         <span class="ctx ctx-black">CASE-2026-000031</span>
       </div>
       <button class="btn" onclick="go(0)">
-        <span>Inapoi la inceput</span><span class="btn-arrow">→</span>
+        <span>Din nou</span><span class="btn-arrow">→</span>
       </button>
     </div>
 
@@ -634,10 +688,10 @@ body {
     <button class="logo" onclick="hideOverlay();go(0)">notariat</button>
 
     <div class="head">
-      <span style="font-size:var(--t-body);font-weight:400;line-height:1.25;letter-spacing:0;color:var(--black);display:block">Cum functioneaza.</span>
+      <span class="hl-overlay">Cum functioneaza.</span>
     </div>
     <button class="back" onclick="hideOverlay()"><svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
     </button>
     <div class="ov-mid">
@@ -646,9 +700,10 @@ body {
         <div class="step-n">1</div>
         <div class="step-hl">
           <span style="display:block">Alege actul.</span>
-          <span style="display:block">Completeaza online.</span>
+          <span style="display:block">Completeaza.</span>
+          <span style="display:block">Online.</span>
         </div>
-        <div class="step-body">Alege actul de care ai nevoie. Completeaza formularul online. Introdu datele personale — manual sau automat incarcand o copie a actului de identitate. Trimiti. Gata.</div>
+        <div class="step-body">Alege actul de care ai nevoie. Completeaza formularul online. Introdu datele personale — manual sau automat.</div>
       </div>
       <div class="step-block">
         <div class="step-n">2</div>
@@ -711,12 +766,373 @@ function go(n) {
     b.classList.toggle('active', parseInt(b.dataset.n) === cur));
 }
 
+// ── FORM DATA ──────────────────────────────────────────────
+const FORMS = {
+  Procuri: {
+    subtypeLabel: 'Tipul procurii',
+    subtypes: [
+      'Vanzare imobil',
+      'Cumparare imobil',
+      'Vanzare / inmatriculare auto',
+      'Operatiuni bancare',
+      'Succesiune',
+      'Depunere / ridicare acte',
+      'ANAF / institutii publice',
+      'Administrare imobil',
+      'Alt tip de procura'
+    ],
+    conditional: {
+      'Vanzare imobil': [
+        { lbl: 'Adresa imobilului', type: 'text', req: true },
+        { lbl: 'Pret de vanzare (optional)', type: 'text', req: false },
+        { lbl: 'Numar Carte Funciara (optional)', type: 'text', req: false }
+      ],
+      'Cumparare imobil': [
+        { lbl: 'Adresa imobilului (optional)', type: 'text', req: false },
+        { lbl: 'Buget aproximativ (optional)', type: 'text', req: false }
+      ],
+      'Vanzare / inmatriculare auto': [
+        { lbl: 'Marca si model', type: 'text', req: true },
+        { lbl: 'Nr. inmatriculare', type: 'text', req: true },
+        { lbl: 'Serie sasiu VIN (optional)', type: 'text', req: false },
+        { lbl: 'Pret de vanzare (optional)', type: 'text', req: false }
+      ],
+      'Operatiuni bancare': [
+        { lbl: 'Banca / institutie', type: 'text', req: true },
+        { lbl: 'Tipul operatiunilor', type: 'textarea', req: true }
+      ],
+      'Succesiune': [
+        { lbl: 'Numele persoanei decedate', type: 'text', req: true },
+        { lbl: 'Data decesului (optional)', type: 'text', req: false },
+        { lbl: 'Bunuri (optional)', type: 'textarea', req: false }
+      ],
+      'Depunere / ridicare acte': [
+        { lbl: 'Institutia', type: 'text', req: true },
+        { lbl: 'Tipul actelor', type: 'text', req: true }
+      ],
+      'ANAF / institutii publice': [
+        { lbl: 'Institutia', type: 'text', req: true },
+        { lbl: 'Scopul imputernicirii', type: 'textarea', req: true }
+      ],
+      'Administrare imobil': [
+        { lbl: 'Adresa imobilului', type: 'text', req: true },
+        { lbl: 'Tipul operatiunilor', type: 'textarea', req: true },
+        { lbl: 'Perioada (optional)', type: 'text', req: false }
+      ],
+      'Alt tip de procura': [
+        { lbl: 'Descrie scopul procurii', type: 'textarea', req: true }
+      ]
+    },
+    parties: [
+      { label: 'Mandant — datele tale', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] },
+      { label: 'Mandatar — datele imputernicitului', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] }
+    ],
+    fine: 'Trebuie sa te prezinti personal la notar — fara exceptie. Actul original ramane in arhiva notarului; tu primesti un duplicat.'
+  },
+  Declaratii: {
+    subtypeLabel: 'Tipul declaratiei',
+    subtypes: [
+      'Declaratie de stare civila',
+      'Declaratie de rezidenta',
+      'Declaratie privind copiii minori',
+      'Declaratie de renuntare la mostenire',
+      'Declaratie de renuntare la cetatenie',
+      'Declaratie privind bunurile',
+      'Declaratie de consimtamant',
+      'Alta declaratie'
+    ],
+    conditional: {
+      'Declaratie de stare civila': [
+        { lbl: 'Starea civila', type: 'select', opts: ['Casatorit/a','Necasatorit/a','Divortat/a','Vaduv/a'], req: true }
+      ],
+      'Declaratie de rezidenta': [
+        { lbl: 'Adresa de rezidenta', type: 'text', req: true },
+        { lbl: 'Tara', type: 'text', req: true }
+      ],
+      'Declaratie privind copiii minori': [
+        { lbl: 'Numele copilului', type: 'text', req: true },
+        { lbl: 'Data nasterii copilului', type: 'text', req: true },
+        { lbl: 'Scopul declaratiei', type: 'textarea', req: true }
+      ],
+      'Declaratie de renuntare la mostenire': [
+        { lbl: 'Numele defunctului', type: 'text', req: true },
+        { lbl: 'Data decesului (optional)', type: 'text', req: false }
+      ],
+      'Declaratie de renuntare la cetatenie': [
+        { lbl: 'Cetatenia la care se renunta', type: 'text', req: true },
+        { lbl: 'Motivul (optional)', type: 'textarea', req: false }
+      ],
+      'Declaratie privind bunurile': [
+        { lbl: 'Lista bunurilor', type: 'textarea', req: true },
+        { lbl: 'Valoare estimata (optional)', type: 'text', req: false }
+      ],
+      'Declaratie de consimtamant': [
+        { lbl: 'Scopul consimtamantului', type: 'textarea', req: true }
+      ],
+      'Alta declaratie': [
+        { lbl: 'Continutul declaratiei', type: 'textarea', req: true }
+      ]
+    },
+    parties: [
+      { label: 'Declarant — datele tale', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] }
+    ],
+    fine: 'Declaratia se semneaza in fata notarului public, pe propria raspundere. Continutul declarat are forta probanta si este opozabil tertilor.'
+  },
+  Acorduri: {
+    subtypeLabel: 'Tipul acordului',
+    subtypes: [
+      'Acord parental (deplasare minori in strainatate)',
+      'Acord privind partajul bunurilor',
+      'Acord de coabitare',
+      'Acord privind pensia de intretinere',
+      'Acord prenuptial',
+      'Alt tip de acord'
+    ],
+    conditional: {
+      'Acord parental (deplasare minori in strainatate)': [
+        { lbl: 'Numele copilului', type: 'text', req: true },
+        { lbl: 'Data nasterii copilului', type: 'text', req: true },
+        { lbl: 'Tara destinatie', type: 'text', req: true },
+        { lbl: 'Perioada', type: 'text', req: true },
+        { lbl: 'Datele celuilalt parinte', type: 'text', req: true }
+      ],
+      'Acord privind partajul bunurilor': [
+        { lbl: 'Lista bunurilor', type: 'textarea', req: true },
+        { lbl: 'Modalitate de partaj', type: 'textarea', req: true }
+      ],
+      'Acord de coabitare': [
+        { lbl: 'Adresa proprietatii', type: 'text', req: true },
+        { lbl: 'Conditii de coabitare (optional)', type: 'textarea', req: false }
+      ],
+      'Acord privind pensia de intretinere': [
+        { lbl: 'Beneficiar', type: 'text', req: true },
+        { lbl: 'Suma lunara (RON)', type: 'text', req: true },
+        { lbl: 'Durata', type: 'text', req: true }
+      ],
+      'Acord prenuptial': [
+        { lbl: 'Lista bunurilor personale', type: 'textarea', req: true },
+        { lbl: 'Regim matrimonial ales', type: 'select', opts: ['Comunitate de bunuri','Separatie de bunuri'], req: true }
+      ],
+      'Alt tip de acord': [
+        { lbl: 'Descrierea acordului', type: 'textarea', req: true }
+      ]
+    },
+    parties: [
+      { label: 'Partea 1', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] },
+      { label: 'Partea 2', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] }
+    ],
+    fine: 'Toate partile semneaza in fata notarului public. Acordul autentificat are forta executorie si este opozabil tertilor.'
+  },
+  Legalizari: {
+    subtypeLabel: 'Tipul legalizarii',
+    subtypes: [
+      'Legalizare de copii (conform cu originalul)',
+      'Legalizare de semnatura',
+      'Legalizare de traducere',
+      'Alt tip de legalizare'
+    ],
+    conditional: {
+      'Legalizare de copii (conform cu originalul)': [
+        { lbl: 'Tipul documentului', type: 'text', req: true },
+        { lbl: 'Numarul de copii necesare', type: 'text', req: true }
+      ],
+      'Legalizare de semnatura': [
+        { lbl: 'Tipul documentului', type: 'text', req: true },
+        { lbl: 'Numarul de exemplare', type: 'text', req: true }
+      ],
+      'Legalizare de traducere': [
+        { lbl: 'Limba sursa', type: 'text', req: true },
+        { lbl: 'Limba tinta', type: 'text', req: true },
+        { lbl: 'Tipul documentului', type: 'text', req: true }
+      ],
+      'Alt tip de legalizare': [
+        { lbl: 'Descrierea documentului', type: 'textarea', req: true }
+      ]
+    },
+    parties: [
+      { label: 'Solicitant — datele tale', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] }
+    ],
+    fine: 'Aduceti documentul original la programare. Notarul certifica conformitatea copiei cu originalul sau autenticitatea semnaturii.'
+  },
+  Imputerniciri: {
+    subtypeLabel: 'Tipul imputernicirii',
+    subtypes: [
+      'Imputernicire auto (folosinta / instrainare)',
+      'Imputernicire pentru institutii publice',
+      'Imputernicire bancara',
+      'Imputernicire pentru ridicare acte',
+      'Imputernicire medicala',
+      'Alt tip de imputernicire'
+    ],
+    conditional: {
+      'Imputernicire auto (folosinta / instrainare)': [
+        { lbl: 'Marca si model', type: 'text', req: true },
+        { lbl: 'Nr. inmatriculare', type: 'text', req: true },
+        { lbl: 'Serie sasiu VIN (optional)', type: 'text', req: false },
+        { lbl: 'Scopul imputernicirii', type: 'select', opts: ['Folosinta','Instrainare'], req: true }
+      ],
+      'Imputernicire pentru institutii publice': [
+        { lbl: 'Institutia', type: 'text', req: true },
+        { lbl: 'Scopul imputernicirii', type: 'textarea', req: true }
+      ],
+      'Imputernicire bancara': [
+        { lbl: 'Banca', type: 'text', req: true },
+        { lbl: 'Tipul operatiunilor', type: 'textarea', req: true }
+      ],
+      'Imputernicire pentru ridicare acte': [
+        { lbl: 'Institutia', type: 'text', req: true },
+        { lbl: 'Tipul actelor', type: 'text', req: true }
+      ],
+      'Imputernicire medicala': [
+        { lbl: 'Unitatea medicala', type: 'text', req: true },
+        { lbl: 'Tipul deciziilor autorizate', type: 'textarea', req: true }
+      ],
+      'Alt tip de imputernicire': [
+        { lbl: 'Scopul imputernicirii', type: 'textarea', req: true }
+      ]
+    },
+    parties: [
+      { label: 'Titular — datele tale', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] },
+      { label: 'Imputernicit — datele beneficiarului', fields: ['Nume', 'Prenume', 'CNP', 'Serie CI', 'Adresa'] }
+    ],
+    fine: 'Trebuie sa te prezinti personal la notar — fara exceptie. Actul original ramane in arhiva notarului; tu primesti un duplicat.'
+  }
+};
+
+// ── FORM RENDERER ──────────────────────────────────────────
+// ── FIELD BUILDERS ────────────────────────────────────────
+const CHEV_DOWN = `<svg class="chev-down" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CHEV_RIGHT = `<svg style="flex-shrink:0;margin-left:4px;color:var(--grey);opacity:0.4" width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const UPLOAD_ICON = `<svg style="flex-shrink:0;opacity:0.4;color:var(--grey)" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 10V4M7 4L4.5 6.5M7 4L9.5 6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="1" y="11" width="12" height="1.5" rx="0.75" fill="currentColor"/></svg>`;
+
+function mkDrop(id, lbl, opts, val='', cls='f-drop') {
+  return `<div class="${cls}">
+    <span class="f-drop-lbl">${lbl}</span>
+    <select id="${id}" onchange="syncDrop('${id}')" ${!val?'required':''}>
+      <option value="" ${!val?'selected':''} disabled>Alege</option>
+      ${opts.map(o=>`<option value="${o}"${o===val?' selected':''}>${o}</option>`).join('')}
+    </select>
+  </div>`;
+}
+
+function mkText(id, lbl, val='', placeholder='Completeaza') {
+  return `<div class="f-text">
+    <span class="f-text-lbl">${lbl}</span>
+    <input id="${id}" type="text" value="${val}" placeholder="${placeholder}">
+  </div>`;
+}
+
+function mkTextarea(id, lbl, val='', placeholder='Descrie') {
+  return `<div class="f-text">
+    <span class="f-text-lbl">${lbl}</span>
+    <textarea id="${id}" placeholder="${placeholder}" rows="2">${val}</textarea>
+  </div>`;
+}
+
+function mkUpload(id, lbl, done=false) {
+  return `<div class="f-upload" onclick="document.getElementById('${id}-file').click()">
+    <span class="f-upload-lbl">${lbl}</span>
+    <span class="f-upload-status" id="${id}-status">${done ? '✓' : UPLOAD_ICON}</span>
+    <input type="file" id="${id}-file" onchange="onUpload('${id}')">
+  </div>`;
+}
+
+function syncDrop(id) {
+  if (id === 'subtype-select') {
+    const actName = document.getElementById('fhl').textContent.replace('.','').trim();
+    onSubtypeChange(actName);
+  }
+}
+
+function onUpload(id) {
+  const file = document.getElementById(id+'-file').files[0];
+  const status = document.getElementById(id+'-status');
+  if (file && status) { status.textContent = '✓'; status.style.opacity = '0.7'; }
+}
+
+// ── FORM RENDERER ──────────────────────────────────────────
+function renderForm(actName, prefill) {
+  const form = FORMS[actName];
+  if (!form) return;
+  const body = document.getElementById('form-body');
+  const p = prefill || {};
+
+  // Subtype dropdown
+  let html = mkDrop('subtype-select', form.subtypeLabel, form.subtypes, p.subtype || '', 'f-drop field-section--first');
+  html += `<div id="cond-fields" class="cond${p.subtype ? ' show' : ''}"></div>`;
+
+  // Static party sections
+  form.parties.forEach((party, pi) => {
+    const cls = pi === 0 ? 'field-section field-section--first' : 'field-section';
+    html += `<span class="${cls}">${party.label}</span>`;
+    const pid = `party${pi}`;
+    const pd = (p.parties && p.parties[pi]) || {};
+    html += mkUpload(pid+'-ci', 'Copie C.I. — incarca sau completeaza manual', !!pd.ci);
+    party.fields.forEach(f => {
+      const fid = pid+'-'+f.toLowerCase().replace(/\s+/g,'-');
+      html += mkText(fid, f, pd[f] || '');
+    });
+  });
+
+  html += `<div class="fine">${form.fine}</div>`;
+  body.innerHTML = html;
+
+  // Render conditional fields if prefill has subtype
+  if (p.subtype) renderCond(actName, p.subtype, p.cond || {});
+}
+
+function renderCond(actName, subtype, vals) {
+  const form = FORMS[actName];
+  const condDiv = document.getElementById('cond-fields');
+  if (!condDiv || !form.conditional[subtype]) return;
+
+  const fields = form.conditional[subtype];
+  let html = `<span class="field-section field-section--first">Detalii — ${subtype}</span>`;
+  fields.forEach((f, i) => {
+    const fid = 'cond-'+i;
+    const val = vals[f.lbl] || '';
+    if (f.type === 'select') {
+      html += mkDrop(fid, f.lbl, f.opts, val);
+    } else if (f.type === 'textarea') {
+      html += mkTextarea(fid, f.lbl, val);
+    } else {
+      html += mkText(fid, f.lbl, val);
+    }
+  });
+  condDiv.innerHTML = html;
+  condDiv.classList.add('show');
+}
+
+function onSubtypeChange(actName) {
+  const sel = document.getElementById('subtype-select');
+  const subtype = sel.value;
+  const condDiv = document.getElementById('cond-fields');
+  if (!subtype) { condDiv.classList.remove('show'); condDiv.innerHTML = ''; return; }
+  renderCond(actName, subtype, {});
+}
+
+// Procuri/Vanzare imobil prefill data
+const PROCURI_PREFILL = {
+  subtype: 'Vanzare imobil',
+  cond: {
+    'Adresa imobilului': 'Str. Mihai Viteazu 22, ap. 5, Timisoara',
+    'Pret de vanzare (optional)': '85.000 EUR',
+    'Numar Carte Funciara (optional)': 'CF 123456'
+  },
+  parties: [
+    { ci: true, Nume: 'Munteanu', Prenume: 'Alexandru', CNP: '1850312123456', 'Serie CI': 'TM123456', Adresa: 'Str. Florilor 14, ap. 3, Cluj-Napoca' },
+    { ci: true, Nume: 'Munteanu', Prenume: 'Maria', CNP: '2880704123456', 'Serie CI': 'TM654321', Adresa: 'Str. Florilor 14, ap. 3, Cluj-Napoca' }
+  ]
+};
+
 function pick(name, first, rest, legal) {
   document.getElementById('dhl').textContent = name + '.';
   document.getElementById('dsub-first').textContent = first;
   document.getElementById('dsub-rest').textContent = rest;
   document.getElementById('dlegal').textContent = legal;
   document.getElementById('fhl').textContent = name + '.';
+  const prefill = name === 'Procuri' ? PROCURI_PREFILL : null;
+  renderForm(name, prefill);
   go(2);
 }
 
@@ -732,6 +1148,7 @@ function revealNext(id) {
     el.onclick = () => revealNext('f-data');
   } else if (id === 'f-data') {
     revealNext('f-ora');
+  } else if (id === 'f-ora') {
     setTimeout(() => revealNext('f-fine'), 200);
   }
 }
