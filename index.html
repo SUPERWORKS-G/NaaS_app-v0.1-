@@ -387,6 +387,10 @@ body {
 .f-drop select option[value=""] { color: var(--grey); opacity: 0.4; }
 .f-drop select option { color: var(--black); opacity: 1; }
 
+/* CI input mode section */
+.ci-manual { display: none; }
+.ci-manual.show { display: block; }
+
 /* Chevron SVG — kept for other uses */
 .chev-down {
   flex-shrink: 0; margin-left: 6px;
@@ -403,7 +407,7 @@ body {
   font-size: var(--t-body); font-weight: 400;
   color: var(--grey); margin-bottom: 3px;
 }
-.f-text input, .f-text textarea {
+.f-text input, .f-text input[type=date], .f-text textarea {
   font-family: var(--f); font-size: var(--t-body);
   font-weight: 400; color: var(--black);
   background: none; border: none; outline: none;
@@ -471,7 +475,7 @@ body {
 </head>
 <body>
 
-<div class="scene-label">notariat · prototype v9.3</div>
+<div class="scene-label">notariat · prototype v9.7</div>
 
 <div class="phone">
   <div class="di"></div>
@@ -596,7 +600,7 @@ body {
         <div class="step-line"></div>
       </div>
       <div class="head">
-        <span class="hl">50 lei avans.</span>
+        <span class="hl">100 lei avans.</span>
         <span class="ctx ctx-first">Se scade integral din onorariul notarial.</span>
         <span class="ctx">Zero comision.</span>
         <!-- Anchoring copy from the reference — gives the screen weight -->
@@ -628,27 +632,68 @@ body {
       <div class="mid">
         <div class="mid-pad">
           <div class="mid-sub"><span style="display:block">Fa-ti programarea.</span><span style="display:block">Dureaza 1 minut.</span></div>
-          <!-- Orasul: always visible -->
-          <div class="field" id="f-oras" onclick="revealNext('f-birou')">
-            <span class="field-lbl">Orasul</span>
-            <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
+
+          <!-- Orasul — always visible, real select -->
+          <div class="f-drop">
+            <span class="f-drop-lbl">Orasul</span>
+            <select id="b-oras" onchange="onCityChange()">
+              <option value="" selected disabled>Alege</option>
+              <option>Brasov</option>
+              <option>Bucuresti</option>
+              <option>Cluj-Napoca</option>
+              <option>Iasi</option>
+              <option>Oradea</option>
+              <option>Sibiu</option>
+              <option>Timisoara</option>
+            </select>
           </div>
-          <!-- Biroul notarial: disabled until city chosen -->
-          <div class="field" id="f-birou" style="display:none" onclick="revealNext('f-data')">
-            <span class="field-lbl">Biroul notarial</span>
-            <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
+
+          <!-- Biroul notarial — revealed after city, same offices everywhere -->
+          <div id="b-birou-wrap" style="display:none">
+            <div class="f-drop">
+              <span class="f-drop-lbl">Biroul notarial</span>
+              <select id="b-birou" onchange="onOfficeChange()">
+                <option value="" selected disabled>Alege</option>
+                <option>Gică Forță</option>
+                <option>Nelu Turbo</option>
+                <option>Relu Praștie</option>
+              </select>
+            </div>
           </div>
-          <!-- Data: hidden until office chosen -->
-          <div class="field" id="f-data" style="display:none" onclick="revealNext('f-ora')">
-            <span class="field-lbl">Data preferata</span>
-            <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
+
+          <!-- Data preferata — revealed after office -->
+          <div id="b-data-wrap" style="display:none">
+            <div class="f-text">
+              <span class="f-text-lbl">Data preferata</span>
+              <input id="b-data" type="date" onchange="onDateChange()">
+            </div>
           </div>
-          <!-- Ora: hidden until date chosen -->
-          <div class="field" id="f-ora" style="display:none" onclick="revealNext('f-fine')">
-            <span class="field-lbl">Ora preferata</span>
-            <span style="display:flex;align-items:center"><span class="field-val">Alege</span><span class="field-ch">∨</span></span>
+
+          <!-- Ora preferata — revealed after date -->
+          <div id="b-ora-wrap" style="display:none">
+            <div class="f-drop">
+              <span class="f-drop-lbl">Ora preferata</span>
+              <select id="b-ora-period" onchange="onPeriodChange()">
+                <option value="" selected disabled>Alege</option>
+                <option value="dimineata">Dimineata</option>
+                <option value="pranz">Pranz</option>
+                <option value="dupa-amiaza">Dupa-amiaza</option>
+                <option value="orice">Orice ora</option>
+              </select>
+            </div>
+            <!-- Interval sub-select — revealed after period -->
+            <div id="b-interval-wrap" style="display:none">
+              <div class="f-drop">
+                <span class="f-drop-lbl">Intervalul</span>
+                <select id="b-interval" onchange="onTimeChange()">
+                  <option value="" selected disabled>Alege</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="fine" id="f-fine" style="display:none">Prin trimiterea acestui formular, confirmi ca ai citit si esti de acord cu Termenii si conditiile si Politica de confidentialitate.</div>
+
+          <!-- Fine print — revealed after time -->
+          <div class="fine" id="b-fine" style="display:none">Prin trimiterea acestui formular, confirmi ca ai citit si esti de acord cu Termenii si conditiile si Politica de confidentialitate.</div>
         </div>
       </div>
       <button class="back" onclick="go(4)">
@@ -709,7 +754,7 @@ body {
         <div class="step-n">2</div>
         <div class="step-hl">
           <span style="display:block">Plateste.</span>
-          <span style="display:block">50 lei avans.</span>
+          <span style="display:block">100 lei avans.</span>
           <span style="display:block">Zero comision.</span>
         </div>
         <div class="step-body">Avansul se scade direct si integral din onorariul notarial. Primesti mesaj de confirmare. Actele sunt pregatite si te asteapta la notar.</div>
@@ -1037,6 +1082,51 @@ function mkUpload(id, lbl, done=false) {
   </div>`;
 }
 
+// CI mode selector: dropdown chooses upload vs manual, reveals fields accordingly
+function mkCIMode(pid, partyFields, prefillData) {
+  const pd = prefillData || {};
+  // Determine initial mode from prefill
+  const hasManual = partyFields.some(f => pd[f]);
+  const hasCi = pd.ci;
+  const initMode = hasCi ? 'upload' : (hasManual ? 'manual' : '');
+
+  let html = `<div class="f-drop">
+    <span class="f-drop-lbl">Cum preferi sa completezi datele?</span>
+    <select id="${pid}-mode" onchange="onCIMode('${pid}')" ${!initMode?'required':''}>
+      <option value="" ${!initMode?'selected':''} disabled>Alege</option>
+      <option value="upload" ${initMode==='upload'?'selected':''}>Incarc o poza a C.I.</option>
+      <option value="manual" ${initMode==='manual'?'selected':''}>Completez manual</option>
+    </select>
+  </div>`;
+
+  // Upload option
+  html += `<div id="${pid}-ci-upload" class="ci-manual${initMode==='upload'?' show':''}">`;
+  html += `<div class="f-upload" onclick="document.getElementById('${pid}-ci-file').click()">
+    <span class="f-upload-lbl">Copie C.I.</span>
+    <span class="f-upload-status" id="${pid}-ci-status">${hasCi ? '✓' : UPLOAD_ICON}</span>
+    <input type="file" id="${pid}-ci-file" onchange="onUpload('${pid}-ci')">
+  </div>`;
+  html += `</div>`;
+
+  // Manual fields
+  html += `<div id="${pid}-ci-manual" class="ci-manual${initMode==='manual'?' show':''}">`;
+  partyFields.forEach(f => {
+    const fid = pid+'-'+f.toLowerCase().replace(/\s+/g,'-');
+    html += mkText(fid, f, pd[f] || '');
+  });
+  html += `</div>`;
+
+  return html;
+}
+
+function onCIMode(pid) {
+  const mode = document.getElementById(pid+'-mode').value;
+  const uploadDiv = document.getElementById(pid+'-ci-upload');
+  const manualDiv = document.getElementById(pid+'-ci-manual');
+  if (uploadDiv) uploadDiv.classList.toggle('show', mode === 'upload');
+  if (manualDiv) manualDiv.classList.toggle('show', mode === 'manual');
+}
+
 function syncDrop(id) {
   if (id === 'subtype-select') {
     const actName = document.getElementById('fhl').textContent.replace('.','').trim();
@@ -1067,11 +1157,7 @@ function renderForm(actName, prefill) {
     html += `<span class="${cls}">${party.label}</span>`;
     const pid = `party${pi}`;
     const pd = (p.parties && p.parties[pi]) || {};
-    html += mkUpload(pid+'-ci', 'Copie C.I. — incarca sau completeaza manual', !!pd.ci);
-    party.fields.forEach(f => {
-      const fid = pid+'-'+f.toLowerCase().replace(/\s+/g,'-');
-      html += mkText(fid, f, pd[f] || '');
-    });
+    html += mkCIMode(pid, party.fields, pd);
   });
 
   html += `<div class="fine">${form.fine}</div>`;
@@ -1137,27 +1223,65 @@ function pick(name, first, rest, legal) {
 }
 
 // S5 progressive field reveal
-function revealNext(id) {
+function reveal(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.style.display = 'flex';
-  el.classList.add('field-reveal');
-  el.style.animationDelay = '0s';
-  // Chain: birou → data → ora → fine
-  if (id === 'f-birou') {
-    el.onclick = () => revealNext('f-data');
-  } else if (id === 'f-data') {
-    revealNext('f-ora');
-  } else if (id === 'f-ora') {
-    setTimeout(() => revealNext('f-fine'), 200);
+  el.style.display = 'block';
+  el.style.animation = 'reveal 0.3s ease forwards';
+}
+
+function onCityChange() {
+  const city = document.getElementById('b-oras').value;
+  if (city) reveal('b-birou-wrap');
+}
+function onOfficeChange() {
+  const off = document.getElementById('b-birou').value;
+  if (off) reveal('b-data-wrap');
+}
+function onDateChange() {
+  const d = document.getElementById('b-data').value;
+  if (d) reveal('b-ora-wrap');
+}
+const TIME_INTERVALS = {
+  'dimineata':  ['9:00 — 10:30', '10:30 — 12:00'],
+  'pranz':      ['12:00 — 13:00', '13:00 — 14:00'],
+  'dupa-amiaza':['14:00 — 15:30', '15:30 — 17:00'],
+  'orice':      ['Fara preferinta'],
+};
+
+function onPeriodChange() {
+  const period = document.getElementById('b-ora-period').value;
+  if (!period) return;
+  const intervals = TIME_INTERVALS[period];
+  const sel = document.getElementById('b-interval');
+  // Rebuild options
+  sel.innerHTML = '<option value="" selected disabled>Alege</option>' +
+    intervals.map(i => `<option value="${i}">${i}</option>`).join('');
+  const wrap = document.getElementById('b-interval-wrap');
+  wrap.style.display = 'block';
+  // If only one option (Fara preferinta), auto-select and reveal fine
+  if (intervals.length === 1) {
+    sel.value = intervals[0];
+    setTimeout(() => reveal('b-fine'), 200);
   }
 }
 
+function onTimeChange() {
+  const t = document.getElementById('b-interval').value;
+  if (t) setTimeout(() => reveal('b-fine'), 200);
+}
+
 function resetBooking() {
-  ['f-birou','f-data','f-ora','f-fine'].forEach(id => {
+  ['b-birou-wrap','b-data-wrap','b-ora-wrap','b-interval-wrap','b-fine'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.style.display = 'none'; el.classList.remove('field-reveal'); }
+    if (el) el.style.display = 'none';
   });
+  ['b-oras','b-birou','b-ora-period','b-interval'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  const d = document.getElementById('b-data');
+  if (d) d.value = '';
 }
 
 function showOverlay()  { document.getElementById('overlay').classList.add('show'); }
