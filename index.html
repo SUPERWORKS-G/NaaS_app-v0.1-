@@ -142,6 +142,7 @@ body {
   height: var(--btn-h);
   display: flex; align-items: center;
   opacity: 0.45;
+  color: var(--black);
   transition: opacity 0.15s;
 }
 .back:active { opacity: 0.9; }
@@ -175,7 +176,7 @@ body {
 .mid {
   position: absolute;
   top: 162px;
-  bottom: calc(var(--btn-btm) + var(--btn-h) + var(--s3));
+  bottom: calc(var(--btn-btm) + var(--btn-h) + 60px);
   left: 0; right: 0;
   overflow-y: auto; scrollbar-width: none;
 }
@@ -279,6 +280,99 @@ body {
   left: var(--m); right: var(--m);
 }
 .divider { width: 16px; height: 1px; background: var(--rule); margin-bottom: var(--s2); }
+
+/* ── CASE LIST ROWS (S8) ── */
+/* Bespoke row — not act-row. Three-line content. Min 56px tap target. */
+.case-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--rule);
+  padding: var(--s2) 0;
+  min-height: 56px;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+.case-item:active { opacity: 0.4; }
+.case-item-body { flex: 1; }
+.case-ref {
+  font-size: var(--t-body);
+  font-weight: 400;
+  color: var(--black);
+  display: block;
+  margin-bottom: 2px;
+}
+.case-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--grey);
+  display: block;
+  margin-bottom: 2px;
+}
+.case-st {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--black);
+  display: block;
+}
+.case-ch {
+  font-size: 18px;
+  color: var(--grey);
+  opacity: 0.35;
+  padding-left: var(--s2);
+  flex-shrink: 0;
+  line-height: 1;
+}
+/* ── S7 INFO FIELD — mirrors .f-text exactly ── */
+.s7-field {
+  display: flex; flex-direction: column;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+/* First field — matches field-section--first: padding-top s3, no top border */
+.s7-field--first {
+  padding-top: var(--s2);
+  border-top: none;
+}
+.s7-field-lbl {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); margin-bottom: 3px;
+}
+.s7-field-val {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--black); line-height: 1.25;
+}
+.s7-field-val--grey { color: var(--grey); }
+
+/* .s7-appt removed — appointment rows now use .s7-field */
+
+/* ── S8 CASE ROW — mirrors .f-text + right chevron ── */
+.s8-row {
+  display: flex; align-items: center;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer; transition: opacity 0.1s;
+}
+.s8-row:active { opacity: 0.4; }
+.s8-row-body { flex: 1; }
+.s8-row-ref {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--grey); display: block; margin-bottom: 3px;
+}
+.s8-row-act {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--black); display: block; margin-bottom: 3px;
+}
+.s8-row-st {
+  font-size: var(--t-body); font-weight: 400;
+  color: var(--black); display: block;
+}
+.s8-row-ch {
+  font-size: var(--t-body); color: var(--grey);
+  opacity: 0.35; padding-left: var(--s2); flex-shrink: 0;
+}
+
+
 
 /* ── ACT PICKER ── */
 .act-list {
@@ -475,7 +569,7 @@ body {
 </head>
 <body>
 
-<div class="scene-label">notariat · prototype v9.7</div>
+<div class="scene-label">notariat · prototype v9.8</div>
 
 <div class="phone">
   <div class="di"></div>
@@ -707,15 +801,13 @@ body {
     </div>
 
     <!-- ══ 6: CONFIRMATION ══ -->
-    <!-- Point 6: thin rule above case ID block -->
     <div class="card" data-i="6">
       <button class="logo" onclick="go(0)">notariat</button>
       <div class="head">
         <span class="hl">Gata.</span>
-        <span class="ctx ctx-first">Dosarul tau a fost deschis.</span>
-        <span class="ctx">Vei primi confirmarea pe WhatsApp si email.</span>
+        <span class="ctx ctx-first">Vei primi confirmarea pe email.</span>
+        <span class="ctx" style="margin-top:4px;">Dosarul tau a fost deschis — <button onclick="hapticLight();setS7('submitted');go(7)" style="background:none;border:none;padding:0;font-family:var(--f);font-size:var(--t-body);color:var(--grey);text-decoration:underline;text-underline-offset:2px;cursor:pointer;">vezi →</button></span>
       </div>
-      <!-- Case ID in lower zone — mirrors S0 splash structure exactly -->
       <div class="lower">
         <div class="divider"></div>
         <span class="ctx">Numar dosar</span>
@@ -727,6 +819,124 @@ body {
     </div>
 
   </div>
+
+
+    <!-- ══ 7: CASE STATUS ══ -->
+    <div class="card" data-i="7" id="card-s7">
+      <button class="logo" onclick="hapticLight();go(0)">notariat</button>
+
+      <button class="back" id="s7-back" onclick="hapticLight();goBack7()">
+        <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+          <path d="M8.5 1.5 L1.5 8 L8.5 14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!--
+        Headline in .head block — hl ONLY, same as S3/S5.
+        padding-right:54px clears the stage square.
+        Description and all data fields live in .mid-pad — no overlap possible.
+      -->
+      <div class="head">
+        <span class="hl" id="s7-hl" style="padding-right:54px;">Deschis.</span>
+      </div>
+
+      <!--
+        Stage switcher square — 34×34px, top-right aligned with headline.
+        Color encodes status. Tapping cycles all 5 stages.
+      -->
+      <button id="s7-stage-btn" onclick="hapticLight();cycleS7Stage()" style="
+        position:absolute; top:var(--head-top); right:var(--m);
+        width:34px; height:34px; background:var(--black);
+        border:none; cursor:pointer; transition:background 0.18s;
+      "></button>
+
+      <!--
+        Mid zone — top: 162px (standard midTop).
+        Info fields use .s7-field pattern — exactly like .f-text in S3/S5:
+        label (grey 14px, margin-bottom 3px) + value (black 14px).
+        border-bottom: 1px rule. padding: s2 0.
+        mid-cover masks scroll bleed at top, same as S3.
+      -->
+      <div class="mid-cover"></div>
+      <div class="mid" style="bottom:calc(var(--btn-btm) + var(--btn-h) + var(--s3));">
+        <div class="mid-pad" id="s7-body"></div>
+      </div>
+
+      <!--
+        Lower zone — exact S0/S2/S6 pattern:
+        16×1px divider + ctx line 1 + ctx line 2. Two lines only. No tappable elements.
+      -->
+      <!--
+        Red CTA — "Dosar nou →" — standard position.
+        No lower zone — S7 content is self-contained.
+      -->
+      <button class="btn" id="s7-btn" onclick="hapticButton();go(0)">
+        <span>Dosar nou</span><span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- ══ 8: CASE LIST ══ -->
+    <div class="card" data-i="8">
+      <button class="logo" onclick="hapticLight();go(0)">notariat</button>
+
+      <div class="head">
+        <span class="hl">Dosarele mele.</span>
+      </div>
+
+      <!--
+        Mid zone — top: 162px, bottom clears red btn.
+        Case rows use .s8-row — same visual as .f-text:
+        ref (black 14px) + act type (grey 14px) + status (black 14px).
+        border-bottom rule. padding: s2 0.
+        Right chevron at opacity 0.35 — same as act-ch on S1.
+      -->
+      <div class="mid-cover"></div>
+      <div class="mid" style="bottom:calc(var(--btn-btm) + var(--btn-h) + var(--s3));">
+        <div class="mid-pad">
+
+          <div class="s8-row" onclick="hapticLight();goToCase('booked')">
+            <div class="s8-row-body">
+              <span class="s8-row-act">Procuri — Vanzare imobil</span><span class="s8-row-ref">CASE-2026-000031</span>
+              
+              <span class="s8-row-st">Programat</span>
+            </div>
+            <span class="s8-row-ch">→</span>
+          </div>
+
+          <div class="s8-row" onclick="hapticLight();goToCase('in_review')">
+            <div class="s8-row-body">
+              <span class="s8-row-act">Declaratii — Rezidenta</span><span class="s8-row-ref">CASE-2026-000018</span>
+              
+              <span class="s8-row-st">In pregatire</span>
+            </div>
+            <span class="s8-row-ch">→</span>
+          </div>
+
+          <div class="s8-row" onclick="hapticLight();goToCase('completed')">
+            <div class="s8-row-body">
+              <span class="s8-row-act">Acorduri — Partaj</span><span class="s8-row-ref">CASE-2026-000009</span>
+              
+              <span class="s8-row-st">Finalizat</span>
+            </div>
+            <span class="s8-row-ch">→</span>
+          </div>
+
+          <div class="s8-row" onclick="hapticLight();goToCase('archived')">
+            <div class="s8-row-body">
+              <span class="s8-row-act">Declaratii</span><span class="s8-row-ref" style="color:var(--grey);">CASE-2025-000004</span>
+              
+              <span class="s8-row-st" style="color:var(--grey);">Arhivat</span>
+            </div>
+            <span class="s8-row-ch">→</span>
+          </div>
+
+        </div>
+      </div>
+
+      <button class="btn" onclick="hapticButton();go(0)">
+        <span>Dosar nou</span><span class="btn-arrow">→</span>
+      </button>
+    </div>
 
   <!-- ══ OVERLAY ══ -->
   <div class="overlay" id="overlay">
@@ -784,6 +994,8 @@ body {
     <button class="cb" data-n="4" onclick="go(4)">4 — Platesti</button>
     <button class="cb" data-n="5" onclick="go(5)">5 — Rezerva</button>
     <button class="cb" data-n="6" onclick="go(6)">6 — Confirmare</button>
+    <button class="cb" data-n="7" onclick="setS7('submitted');go(7)">7 — Status dosar</button>
+    <button class="cb" data-n="8" onclick="go(8)">8 — Dosarele mele</button>
     <button style="background:#1a1a1a;border:1px solid #2a2a2a;color:#555;font-family:var(--f);font-size:11px;padding:8px 14px;cursor:pointer;border-radius:0" onclick="showOverlay()">Cum functioneaza ↗</button>
   </div>
 </div>
@@ -802,11 +1014,14 @@ body {
 <script>
 let cur = 0;
 function go(n) {
-  // Reset S5 fields on re-entry
   if (n === 5) resetBooking();
+  if (n === 7 && document.getElementById('s7-body').innerHTML === '') setS7('submitted');
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   cur = n;
   document.querySelector(`.card[data-i="${n}"]`).classList.add('active');
+  // Show S7 sub-switcher only when on S7
+  const s7ctrl = document.getElementById('s7-controls');
+  if (s7ctrl) s7ctrl.style.display = n === 7 ? 'flex' : 'none';
   document.querySelectorAll('.cb').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.n) === cur));
 }
@@ -1348,9 +1563,232 @@ overlayEl.addEventListener('mouseleave', () => { ovDragging = false; });
 
 // Touch on overlay
 overlayEl.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+// ── HAPTIC SIMULATION (prototype only — real device uses expo-haptics) ──
+// These functions are stubs. On device they map to:
+//   hapticLight()  → Haptics.impactAsync(ImpactFeedbackStyle.Light)
+//   hapticButton() → Haptics.impactAsync(ImpactFeedbackStyle.Medium)
+//   hapticSuccess()→ Haptics.notificationAsync(NotificationFeedbackType.Success)
+// S7/S8 haptic map:
+//   Stage square tap (S7)       → hapticLight()
+//   Back chevron tap (S7)       → hapticLight()
+//   "notariat" wordmark tap (S7/S8) → hapticLight()
+//   Case row tap (S8)           → hapticLight()
+//   "Dosar nou" button (S8)     → hapticButton()
+//   "Dosar nou" link (S7 lower) → hapticLight()
+//   "Dosarele mele" row (S7)    → hapticLight()
+function hapticLight()  { /* ImpactFeedbackStyle.Light  */ }
+function openMaps(el) { const addr = el.getAttribute("data-addr"); if (addr) window.open("https://maps.google.com/?q=" + encodeURIComponent(addr), "_blank"); }
+function hapticButton() { /* ImpactFeedbackStyle.Medium */ }
+function hapticSuccess(){ /* NotificationFeedbackType.Success */ }
+
 overlayEl.addEventListener('touchend', e => {
   if (e.changedTouches[0].clientX - tx > 44) hideOverlay();
 });
+
+// ── S7 CASE STATUS ─────────────────────────────────────────
+
+let s7_from = 6;
+let s7_stage_index = 0;
+const S7_STAGES = ['submitted', 'in_review', 'booked', 'completed', 'archived'];
+const S7_STAGE_COLORS = {
+  submitted: '#000000',
+  in_review: '#717171',
+  booked:    '#717171',
+  completed: '#ff0000',
+  archived:  '#c0c0c0',
+};
+
+function goBack7() { go(s7_from); }
+
+function goToCase(status) {
+  s7_from = 8;
+  setS7(status);
+  go(7);
+}
+
+function cycleS7Stage() {
+  s7_stage_index = (s7_stage_index + 1) % S7_STAGES.length;
+  const status = S7_STAGES[s7_stage_index];
+  setS7(status);
+  document.querySelectorAll('.s7-sub').forEach((b, i) => {
+    b.classList.toggle('s7-active', i === s7_stage_index);
+  });
+}
+
+const S7_CONFIG = {
+  submitted: {
+    hl: 'Deschis.', hlColor: 'var(--black)',
+    squareColor: '#000000',
+    desc: 'Dosarul tau este inregistrat.',
+    rows: [
+      { lbl: 'Numar dosar',   val: 'CASE-2026-000031' },
+      { lbl: 'Tipul actului', val: 'Procuri — Vanzare imobil' },
+    ],
+    appt: null, apptNote: null,
+    lowerLine1: 'Vei fi notificat pe email cand statusul se schimba.',
+    lowerLine2: '',
+  },
+  in_review: {
+    hl: 'In pregatire.', hlColor: 'var(--black)',
+    squareColor: '#717171',
+    desc: 'Biroul notarial lucreaza la documentele tale.',
+    rows: [
+      { lbl: 'Numar dosar',    val: 'CASE-2026-000031' },
+      { lbl: 'Tipul actului',  val: 'Procuri — Vanzare imobil' },
+      { lbl: 'Birou notarial', val: 'Birou Notarial Ionescu & Asociatii' },
+      { lbl: 'Oras',           val: 'Cluj-Napoca' },
+    ],
+    appt: null, apptNote: null,
+    lowerLine1: 'Vei fi notificat pe email cand statusul se schimba.',
+    lowerLine2: '',
+  },
+  booked: {
+    hl: 'Programat.', hlColor: 'var(--black)',
+    squareColor: '#717171',
+    desc: 'Programarea ta este confirmata.',
+    rows: null,
+    appt: {
+      'Data':   'Miercuri, 26 martie 2026',
+      'Ora':    '10:30 — 12:00',
+      'Birou':  'Birou Notarial Ionescu & Asociatii',
+      'Adresa': 'Str. Horea 12, ap. 4, Cluj-Napoca',
+    },
+    apptNote: 'Prezinta-te cu actul de identitate original.',
+    lowerLine1: 'Vei fi notificat pe email daca apar modificari.',
+    lowerLine2: '',
+  },
+  completed: {
+    hl: 'Finalizat.', hlColor: 'var(--black)',
+    squareColor: '#FF0000',
+    desc: 'Actele au fost semnate la birou.',
+    rows: [
+      { lbl: 'Numar dosar',    val: 'CASE-2026-000031' },
+      { lbl: 'Tipul actului',  val: 'Procuri — Vanzare imobil' },
+      { lbl: 'Birou notarial', val: 'Birou Notarial Ionescu & Asociatii' },
+      { lbl: 'Data semnarii',  val: '26 martie 2026' },
+    ],
+    appt: null, apptNote: null,
+    lowerLine1: 'Dosarul este inchis.',
+    lowerLine2: '',
+  },
+  archived: {
+    hl: 'Arhivat.', hlColor: 'var(--grey)',
+    squareColor: '#D4D4D4',
+    desc: 'Datele acestui dosar au fost sterse.',
+    rows: [
+      { lbl: 'Numar dosar',   val: 'CASE-2025-000004', grey: true },
+      { lbl: 'Tipul actului', val: 'Declaratii',        grey: true },
+    ],
+    appt: null, apptNote: null,
+    lowerLine1: 'Conform politicii GDPR, datele se pastreaza 12 luni.',
+    lowerLine2: '',
+  },
+};
+
+
+function setS7(status) {
+  const cfg  = S7_CONFIG[status] || S7_CONFIG.submitted;
+  const hl   = document.getElementById('s7-hl');
+  const body = document.getElementById('s7-body');
+  const sq   = document.getElementById('s7-stage-btn');
+  const back = document.getElementById('s7-back');
+  if (!body) return;
+
+  s7_stage_index = S7_STAGES.indexOf(status);
+  if (s7_stage_index < 0) s7_stage_index = 0;
+
+  hl.textContent = cfg.hl;
+  hl.style.color = cfg.hlColor || 'var(--black)';
+  if (sq) sq.style.background = cfg.squareColor;
+  if (back) back.style.display = (status === 'submitted' && s7_from === 6) ? 'none' : 'flex';
+
+  let html = '';
+
+  // ── First field: desc [+ apptNote for booked] ──────────────
+  // s7-field--first: padding-top s2, no top rule, border-bottom
+  // For booked: desc and apptNote are adjacent grey lines inside ONE field,
+  // mirroring S4 (Se scade + Zero comision as consecutive ctx spans).
+  // For all other states: single grey desc line.
+  if (cfg.apptNote) {
+    // Booked: two adjacent lines, no border-bottom on this first block
+    // (the appointment fields below provide their own top rules)
+    html += '<div class="s7-field s7-field--first" style="border-bottom:none;">'
+      + '<span class="s7-field-val" style="color:var(--grey);">' + cfg.desc + '</span>'
+      + '<span class="s7-field-val" style="color:var(--grey);margin-top:2px;">' + cfg.apptNote + '</span>'
+      + '</div>';
+  } else {
+    html += '<div class="s7-field s7-field--first">'
+      + '<span class="s7-field-val" style="color:var(--grey);">' + cfg.desc + '</span>'
+      + '</div>';
+  }
+
+  // ── Data fields ───────────────────────────────────────────
+  if (cfg.rows) {
+    cfg.rows.forEach(r => {
+      const vc = r.grey ? 'var(--grey)' : 'var(--black)';
+      html += '<div class="s7-field">'
+        + '<span class="s7-field-lbl">' + r.lbl + '</span>'
+        + '<span class="s7-field-val" style="color:' + vc + ';">' + r.val + '</span>'
+        + '</div>';
+    });
+  }
+
+  // ── Appointment fields ────────────────────────────────────
+  if (cfg.appt) {
+    for (const [k, v] of Object.entries(cfg.appt)) {
+      // Address field — tappable, opens Google Maps
+      if (k === 'Adresa') {
+        const mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(v);
+        html += '<div class="s7-field" style="cursor:pointer;" onclick="hapticLight();openMaps(this)"'
+          + ' data-addr="' + v.replace(/"/g, '&quot;') + '">'
+          + '<span class="s7-field-lbl">' + k + '</span>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+          + '<span class="s7-field-val">' + v + '</span>'
+          + '<span style="font-size:var(--t-body);color:var(--grey);opacity:0.35;">↗</span>'
+          + '</div></div>';
+      } else {
+        html += '<div class="s7-field">'
+          + '<span class="s7-field-lbl">' + k + '</span>'
+          + '<span class="s7-field-val">' + v + '</span>'
+          + '</div>';
+      }
+    }
+  }
+
+  // ── "Dosarele mele" — label + value + arrow, WITH border-bottom ──
+  html += '<div class="s7-field" style="cursor:pointer;" onclick="hapticLight();go(8)">'
+    + '<span class="s7-field-lbl">Alte dosare</span>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+    + '<span class="s7-field-val">Dosarele mele</span>'
+    + '<span style="font-size:var(--t-body);color:var(--grey);opacity:0.35;">→</span>'
+    + '</div></div>';
+
+  body.innerHTML = html;
+}
+
+
+function switchS7Status(status, btn) {
+  setS7(status);
+  document.querySelectorAll('.s7-sub').forEach(b => b.classList.remove('s7-active'));
+  btn.classList.add('s7-active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setS7('submitted');
+});
+
 </script>
+
+<style>
+.s7-sub {
+  background: #141414; border: 1px solid #1e1e1e;
+  color: #444; font-family: var(--f); font-size: 11px;
+  font-weight: 400; padding: 7px 12px; cursor: pointer;
+  transition: all 0.15s; border-radius: 0;
+}
+.s7-sub:hover { background: #1a1a1a; color: #999; }
+.s7-sub.s7-active { background: #222; border-color: #333; color: #ccc; }
+</style>
+
 </body>
 </html>
